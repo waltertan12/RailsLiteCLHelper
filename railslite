@@ -1,0 +1,155 @@
+#!/usr/bin/env ruby
+
+class RailsLite
+  attr_reader :commands, :shortcuts
+
+  def initialize
+    @commands = ["--help"]
+    @shortcuts = []
+  end
+
+  def new(app_name)
+    if exsisting_project?
+      puts "Can't initialize a new RailsLite application within the directory of another..."
+    else
+      create_directory(app_name)
+    end
+  end
+
+  def create_directory(app_name)
+    app_name = "new_app" if app_name == "" || app_name.nil?
+
+    readme = <<-MARKDOWN
+# #{app_name}
+This is an app built using the RailsLite framework
+    MARKDOWN
+
+    gemfile_text = <<-RUBY
+source 'https://rubygems.org'
+
+gem 'webrick'
+gem 'activesupport'
+gem 'sqlite3'
+gem 'pry'
+gem 'curl'
+    RUBY
+
+    applications_controller = <<-RUBY
+class ApplicationsController < ControllerBase
+  protect_from_forgery
+  def index
+    render :index
+  end
+end
+    RUBY
+
+    application_index = <<-HTML
+<div>"Hello, world!"</div>
+    HTML
+
+    new_app_router = <<-RUBY
+require_relative '../bin/include'
+
+ROUTER = Router.new
+ROUTER.draw do
+  get Regexp.new('^/index$'), ApplicationsController, :index
+end
+    RUBY
+
+    # Create file directory and Gemfile
+    system("mkdir #{app_name}")
+    system("mkdir #{app_name}/config")
+    system("mkdir #{app_name}/db")
+    system("mkdir #{app_name}/app")
+    system("mkdir #{app_name}/bin")
+    system("mkdir #{app_name}/app/controllers")
+    system("mkdir #{app_name}/app/models")
+    system("mkdir #{app_name}/app/views")
+    system("mkdir #{app_name}/app/views/applications")
+    system("touch #{app_name}/README.md")
+    system("touch #{app_name}/Gemfile")
+    system("echo \"#{readme}\" > #{app_name}/README.md")
+    system("echo \"#{gemfile_text}\" > #{app_name}/Gemfile")
+    system("bundle install --gemfile=#{app_name}/Gemfile")
+    
+    # Download RailsLite libraries
+    system("curl -LOk https://github.com/waltertan12/RailsLite/archive/master.zip")
+    system("unzip master.zip")
+
+    # Move required files into app directory
+    system("mv RailsLite-master/action_view #{app_name}")
+    system("mv RailsLite-master/active_record #{app_name}")
+    system("mv RailsLite-master/config/root_path.rb #{app_name}/config")
+    system("mv RailsLite-master/db/database.sql #{app_name}/db")
+    system("mv RailsLite-master/bin/console.rb #{app_name}/bin")
+    system("mv RailsLite-master/bin/include.rb #{app_name}/bin")
+    system("mv RailsLite-master/bin/server.rb #{app_name}/bin")
+
+    # Create files necessary for server to run
+    system("touch #{app_name}/app/controllers/applications_controller.rb")
+    system("echo  \"#{applications_controller}\" > #{app_name}/app/controllers/applications_controller.rb")
+
+    system("touch #{app_name}/app/views/applications/index.html.erb")
+    system("echo \"#{application_index}\" > #{app_name}/app/views/applications/index.html.erb")
+
+    system("touch #{app_name}/config/router.rb")
+    system("echo \"#{new_app_router}\" > #{app_name}/config/router.rb")
+
+    system("rm -R RailsLite-master")
+    system("rm master.zip")
+  end
+
+  def exsisting_project?
+    File.exists?("Gemfile")
+  end
+
+  def make_shortcuts
+    if @shortcuts.empty?
+      commands.each do |command|
+        @shortcuts << command[0] unless @shortcuts.include?(command[0])
+      end
+    end
+    @shortcuts
+  end
+
+  def add_commands
+    Dir.glob('./bin/*.rb').each do |file|
+      command = file.split("/")[2].sub(".rb","")
+      
+      @commands << command.to_sym unless command == "include"
+    end
+  end
+
+  def method_missing(method)
+    if @commands.include?(method)
+      system("ruby ./bin/#{method}.rb")
+    elsif make_shortcuts.index(method[0])
+      index = shortcuts.index(method[0])
+      system("ruby ./bin/#{commands[index]}.rb")
+    else
+      puts "Command \"#{method}\" not found"
+      puts "Type railslite --help for a list of commands"
+    end
+  end
+
+  def help
+    puts "Here area list of commands: "
+    @commands.each { |command| puts command }
+  end
+end
+
+railslite = RailsLite.new
+railslite.add_commands
+
+if ARGV.empty?
+  railslite.help
+else
+  method = ARGV.shift
+  if method == "new"
+    app_name = (ARGV.empty? ? "new_app" : ARGV.shift)
+    railslite.new(app_name)
+  else
+
+    railslite.send(method)
+  end
+end

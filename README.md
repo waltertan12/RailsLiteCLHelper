@@ -1,0 +1,2 @@
+# RailsLite Command Line Helper
+Download `railslite` and move it to somewhere in your PATH by running `sudo mv railslite /directory/in/PATH`. To check which directories are included in your PATH, type `echo $PATH` in the console.
