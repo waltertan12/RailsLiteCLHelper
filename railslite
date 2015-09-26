@@ -52,7 +52,7 @@ require_relative '../bin/include'
 
 ROUTER = Router.new
 ROUTER.draw do
-  get Regexp.new('^/index$'), ApplicationsController, :index
+  get Regexp.new('^/$'), ApplicationsController, :index
 end
     RUBY
 
