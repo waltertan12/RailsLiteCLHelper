@@ -4,7 +4,7 @@ class RailsLite
   attr_reader :commands, :shortcuts
 
   def initialize
-    @commands = ["--help"]
+    @commands = ["--help", "new"]
     @shortcuts = []
   end
 
@@ -44,7 +44,7 @@ end
     RUBY
 
     application_index = <<-HTML
-<div>"Hello, world!"</div>
+<div>"Hello, RailsLite!"</div>
     HTML
 
     new_app_router = <<-RUBY
@@ -80,7 +80,7 @@ end
     system("mv RailsLite-master/action_view #{app_name}")
     system("mv RailsLite-master/active_record #{app_name}")
     system("mv RailsLite-master/config/root_path.rb #{app_name}/config")
-    system("mv RailsLite-master/db/database.sql #{app_name}/db")
+    system("mv RailsLite-master/db/schema.sql #{app_name}/db")
     system("mv RailsLite-master/bin/console.rb #{app_name}/bin")
     system("mv RailsLite-master/bin/include.rb #{app_name}/bin")
     system("mv RailsLite-master/bin/server.rb #{app_name}/bin")
@@ -95,6 +95,7 @@ end
     system("touch #{app_name}/config/router.rb")
     system("echo \"#{new_app_router}\" > #{app_name}/config/router.rb")
 
+    # Remove uneeded files and folders
     system("rm -R RailsLite-master")
     system("rm master.zip")
   end
@@ -135,6 +136,10 @@ end
   def help
     puts "Here area list of commands: "
     @commands.each { |command| puts command }
+  end
+
+  def migrate
+    
   end
 end
 
